@@ -1,0 +1,71 @@
+# Write a function, longest_subpalindrome_slice(text) that takes 
+# a string as input and returns the i and j indices that 
+# correspond to the beginning and end indices of the longest 
+# palindrome in the string. 
+#
+# Grading Notes:
+# 
+# You will only be marked correct if your function runs 
+# efficiently enough. We will be measuring efficency by counting
+# the number of times you access each string. That count must be
+# below a certain threshold to be marked correct.
+#
+# Please do not use regular expressions to solve this quiz!
+
+
+def longest_subpalindrome_slice(text):
+    "Return (i, j) such that text[i:j] is the longest palindrome in text."
+    # Your code her
+    if len(text) <= 1:
+        return (0,0)
+    else:
+        words,indexes = splitup(text)
+        lens = [palindrome(i) for i in words]
+        
+        test=[]
+        for i in range(len(indexes)):
+            if lens[i][0] != int(indexes[i][0]) or lens[i][1] != int(indexes[i][1]):
+                test.append([lens[i][0]+int(indexes[i][0]),lens[i][1]+int(indexes[i][0])])
+            else:
+                test.append([lens[i][0],lens[i][1]])
+        values = map(lambda x: x[1]-x[0], test)
+        indexss = values.index(max(values))
+        return tuple(test[indexss])
+    
+def palindrome(subtext):
+    middle = len(subtext)/2
+    longest = [0,0]
+    for i in range(middle-1,-1,-1):
+        if str(subtext[i]).lower() != str(subtext[len(subtext)-1-i]).lower():
+            return longest
+        elif str(subtext[i]).lower() == str(subtext[len(subtext)-1-i]).lower():
+            longest[0] = i
+            longest[1] = len(subtext)-i
+    return longest
+
+def splitup(text):
+    subtext = []
+    index = []
+    lists = list(enumerate(text))
+    t = lambda x,y: str(x)+str(y)
+    
+    for i in range(len(text)-1):
+        texting = "".join(str(lists[i][1]))
+        indexing = "".join(str(lists[i][0]))
+        for j in range(i+1,len(text)):
+            subtext.append(t(texting,lists[j][1]))
+            texting = "".join(t(texting,lists[j][1]))
+            index.append(t(indexing,lists[j][0]))
+    return subtext,index
+    
+def test():
+    L = longest_subpalindrome_slice
+    assert L('racecar') == (0, 7)
+    assert L('Racecar') == (0, 7)
+    assert L('RacecarX') == (0, 7)
+    assert L('Race carr') == (7, 9)
+    assert L('') == (0, 0)
+    assert L('something rac e car going') == (8,21)
+    assert L('xxxxx') == (0, 5)
+    assert L('Mad am I ma dam.') == (0, 15)
+    return 'tests pass'
