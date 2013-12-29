@@ -1,0 +1,94 @@
+# This problem deals with the one-player game foxes_and_hens. This 
+# game is played with a deck of cards in which each card is labelled
+# as a hen 'H', or a fox 'F'. 
+# 
+# A player will flip over a random card. If that card is a hen, it is
+# added to the yard. If it is a fox, all of the hens currently in the
+# yard are removed.
+#
+# Before drawing a card, the player has the choice of two actions, 
+# 'gather' or 'wait'. If the player gathers, she collects all the hens
+# in the yard and adds them to her score. The drawn card is discarded.
+# If the player waits, she sees the next card. 
+
+import random
+
+def foxes_and_hens(strategy, foxes=7, hens=45):
+    """Play the game of foxes and hens."""
+    # A state is a tuple of (score-so-far, number-of-hens-in-yard, deck-of-cards)
+    state = (score, yard, cards) = (0, 0, 'F'*foxes + 'H'*hens)
+    while cards:
+        action = strategy(state)
+        state = (score, yard, cards) = do(action, state)
+    return score + yard
+
+def do(action, state):
+    "Apply action to state, returning a new state."
+    # Make sure you always use up one card.
+    #
+    score,yard,cards = state
+    Hnum = cards.count("H")
+    Fnum = cards.count("F")
+    pick_out = random.choice(cards)
+    if action == "wait":
+        if pick_out == "H":
+            yard += 1
+            Hnum = Hnum-1
+        else:
+            yard = 0
+            Fnum = Fnum-1
+        cards  = 'F'*Fnum + 'H'*Hnum
+        return (score,yard,cards)
+    else:
+        score += yard
+        if pick_out == "H":
+            Hnum = Hnum-1
+        else:
+            Fnum = Fnum-1
+        cards = 'F'*Fnum + 'H'*Hnum
+        return (score,0,cards)
+    
+def take5(state):
+    "A strategy that waits until there are 5 hens in yard, then gathers."
+    (score, yard, cards) = state
+    if yard < 5:
+        return 'wait'
+    else:
+        return 'gather'
+
+def average_score(strategy, N=1000):
+    return sum(foxes_and_hens(strategy) for _ in range(N)) / float(N)
+
+def superior(A, B=take5):
+    "Does strategy A have a higher average score than B, by more than 1.5 point?"
+    return average_score(A) - average_score(B) > 1.5
+
+#----------------------------------------------------------------
+#The strategy I provided to compete with take5 strategy
+def strategy(state):
+    (score, yard, cards) = state
+    if Fprob(state) == 0:
+        return "wait"
+    elif Fprob(state) >= 0.37 or yard == 4:
+        return "gather"
+    else:
+        return 'wait'
+
+#the function to get the probability of Foxes in the card
+def Fprob(state):
+    _,_,cards = state
+    return float(cards.count("F")) / len(cards)
+    
+def test():
+    gather = do('gather', (4, 5, 'F'*4 + 'H'*10))
+    assert (gather == (9, 0, 'F'*3 + 'H'*10) or 
+            gather == (9, 0, 'F'*4 + 'H'*9))
+    
+    wait = do('wait', (10, 3, 'FFHH'))
+    assert (wait == (10, 4, 'FFH') or
+            wait == (10, 0, 'FHH'))
+    
+    assert superior(strategy)
+    return 'tests pass'
+
+print test()   
